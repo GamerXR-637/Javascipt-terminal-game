@@ -1,0 +1,22 @@
+{
+  "name": "project-injections",
+  "version": "1.0.0",
+  "description": "A terminal-based adventure game.",
+  "main": "terminal.js",
+  "bin": "terminal.js",
+  "scripts": {
+    "start": "node terminal.js",
+    "build": "pkg . --output Project-Injections"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "targets": [
+      "node18-win"
+    ]
+  }
+}

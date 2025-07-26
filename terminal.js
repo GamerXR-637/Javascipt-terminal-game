@@ -22,14 +22,15 @@ const gameState = {
   playerName: "user_" + randomUUID().slice(0, 8),
   unlockedDirs: new Set(),
   unlockedFiles: new Set(),
+  time: 5
 };
 
 const fileSystem = {
   "/": {
-    "about.txt": () => `
+    "about-the-game.txt": () => `
 Hello ${gameState.playerName},
 \nProject-Injections is a game made by _gamerxr.637_\nGithub: https://github.com/GamerXR-637\nWebsite: https://gamerxr637.is-a.dev/`,
-    'readthis.txt': () => `Hello ${gameState.playerName}, if you are reading this then that means that the company have been cesed by the goverment and now been using the tech to make soldiers. I trust you to be able to find a way to stop them. \nThank you\n\nDocter and Dad, Dr.C`
+    'readthis.txt': () => `Hello ${gameState.playerName}, if you are reading this then that means that the company have been cesed by the goverment and now been using the tech to make soldiers. I was able to connect the server to you and I trust you to be able to find a way to stop them. \nThank you\n\nDocter C`
   },
 
 };
@@ -360,19 +361,20 @@ function handleDTextCode(args) {
   }
 }
 
-function handleHelp() {
-  console.log("Available commands:");
-  console.log("  ls                       - List files and directories.");
-  console.log("  cd [dir]                 - Change directory. Use 'cd ..' to go up.");
-  console.log("  cat [file]               - Read the contents of a file.");
-  console.log("  unlock [name] [password] - Unlock a protected file or directory.");
-  console.log("  help                     - Show this help message.");
-  console.log("  exit                     - Exit the game.");
-  console.log("  clear                    - Clear the console.");
-  console.log("  dc64 [text]              - Decode Base64 to text.");
-  console.log("  ec64 [text]              - Encode text to Base64.");
-  console.log("  dc [text]                - Decode text.");
-  console.log("  ec [text]                - Encode text.");
+async function handleHelp() {
+  let time = gameState.time;
+  await animateText("Available commands:", {time});
+  await animateText("  ls                       - List files and directories.", {time});
+  await animateText("  cd [dir]                 - Change directory. Use 'cd ..' to go up.", {time});
+  await animateText("  cat [file]               - Read the contents of a file.", {time});
+  await animateText("  unlock [name] [password] - Unlock a protected file or directory.", {time});
+  await animateText("  help                     - Show this help message.", {time});
+  await animateText("  exit                     - Exit the game.", {time});
+  await animateText("  clear                    - Clear the console.", {time});
+  await animateText("  dc64 [text]              - Decode Base64 to text.", {time});
+  await animateText("  ec64 [text]              - Encode text to Base64.", {time});
+  await animateText("  dc [text]                - Decode text.", {time});
+  await animateText("  ec [text]                - Encode text.", {time});
 }
 
 function gameLoop() {
@@ -399,7 +401,7 @@ function gameLoop() {
         handleUnlock(args);
         break;
       case "help":
-        handleHelp();
+        await handleHelp();
         break;
       case "dc64":
         handledc(args);

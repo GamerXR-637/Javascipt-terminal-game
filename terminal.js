@@ -8,23 +8,12 @@ const rl = readline.createInterface({
 
 const colors = {
   reset: "\x1b[0m",
-  bright: "\x1b[1m",
   fg: {
     red: "\x1b[31m",
     green: "\x1b[32m",
     yellow: "\x1b[33m",
     blue: "\x1b[34m",
-    magenta: "\x1b[35m",
     cyan: "\x1b[36m",
-    white: "\x1b[37m",
-  },
-  bg: {
-    red: "\x1b[41m",
-    green: "\x1b[42m",
-    yellow: "\x1b[43m",
-    blue: "\x1b[44m",
-    magenta: "\x1b[45m",
-    cyan: "\x1b[46m",
   },
 };
 
@@ -33,17 +22,16 @@ const gameState = {
   playerName: "user_" + randomUUID().slice(0, 8),
   unlockedDirs: new Set(),
   unlockedFiles: new Set(),
-  subject: randomUUID().slice(0, 5),
 };
 
 const fileSystem = {
   "/": {
     "about.txt": () => `
 Hello ${gameState.playerName},
-\nProject-Injections is a game made by _gamerxr.637_\nGithub: https://github.com/GamerXR-637\nWebsite: https://gamerxr637.is-a.dev/
-
-    `,
+\nProject-Injections is a game made by _gamerxr.637_\nGithub: https://github.com/GamerXR-637\nWebsite: https://gamerxr637.is-a.dev/`,
+    'readthis.txt': () => `Hello ${gameState.playerName}, if you are reading this then that means that the company have been cesed by the goverment and now been using the tech to make soldiers. I trust you to be able to find a way to stop them. \nThank you\n\nDocter and Dad, Dr.C`
   },
+
 };
 
 function getCurrentDirectory() {
@@ -95,7 +83,6 @@ function handleLs() {
         typeof fileData === "object" &&
         fileData.type !== "locked_file"
       ) {
-        // If an item is an object but not a locked file, it's a directory.
         console.log(
           `drw-r--r--  ${gameState.playerName}  ${colors.fg.blue}${item}/${colors.reset}`
         );
@@ -152,7 +139,19 @@ function handleCd(args) {
   }
 }
 
-function handleCat(args) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function animateText(text, delay = 15) {
+  for (const char of text) {
+    process.stdout.write(char);
+    await sleep(delay);
+  }
+  process.stdout.write("\n");
+}
+
+async function handleCat(args) {
   const target = args[0];
   if (!target) {
     console.log("cat: missing operand");
@@ -166,42 +165,32 @@ function handleCat(args) {
     return;
   }
 
+  let content;
   if (typeof file === "string") {
-    console.log(file);
-    return;
-  }
-
-  if (typeof file === "function") {
-    console.log(file());
-    return;
-  }
-
-  // Handle locked files
-  if (typeof file === "object" && file.type === "locked_file") {
+    content = file;
+  } else if (typeof file === "function") {
+    content = file();
+  } else if (file.type === "locked_file") {
     const fullPath = getFullPath(target);
     if (gameState.devMode || gameState.unlockedFiles.has(fullPath)) {
-      if (typeof file.content === "function") {
-        console.log(file.content());
-      } else {
-        console.log(file.content);
-      }
+      content =
+        typeof file.content === "function" ? file.content() : file.content;
     } else {
       console.log(`${colors.fg.yellow}${file.locked_message}${colors.reset}`);
       console.log(`Use 'unlock [filename] [password]' to open it.`);
+      return;
     }
   } else {
     console.log(`${colors.fg.red}cat: no such file: ${target}${colors.reset}`);
+    return;
+  }
+
+  if (content) {
+    await animateText(content);
   }
 }
 
 function handleUnlock(args) {
-  if (gameState.devMode) {
-    console.log(
-      `${colors.fg.yellow}Dev mode is active. Passwords are not required.${colors.reset}`
-    );
-    return;
-  }
-
   const [filename, password] = args;
   if (!filename || !password) {
     console.log("Usage: unlock [filename] [password]");
@@ -241,28 +230,37 @@ function handleUnlock(args) {
   }
 }
 
-function displayWelcomeBanner() {
-  console.log(
+async function displayWelcomeBanner() {
+  await animateText(
     `\nWelcome, ${colors.fg.cyan}${gameState.playerName}${colors.reset} to MicroInject Inc.!\n`
   );
-  console.log(
-    "Here in MircoInject Inc. we specialize in find way to cure disease with DNA injection therapy."
+  await animateText(
+    `
+    Here in MircoInject Inc. we specialize in find way to cure disease with DNA injection therapy.
+    We been do the impossible that other are scare to do and been trusted by 130 countries since 1985.
+    We were able to cure:
+    - Alzheime
+    - Asthma
+    - AIDS
+    - Diabetes
+    - And more...
+    `
   );
   const displayDate = new Date();
-  displayDate.setFullYear(2023);
-  console.log(
+  displayDate.setFullYear(2027);
+  await animateText(
     `\n Time: ${new Date().toLocaleTimeString()} \n Date: ${displayDate.toLocaleDateString()}`
   );
-  console.log(
+  await animateText(
     "------------------------------------------------------------------\n"
   );
-  console.log("Type 'help' for a list of commands.\n");
+  await animateText("Type 'help' for a list of commands.\n");
 }
 
 function handledc(args) {
   const textToDecode = args.join(" ");
   if (!textToDecode) {
-    console.log("Usage: dc [text to decode]");
+    console.log("Usage: dc64 [text to decode]");
     return;
   }
   try {
@@ -278,7 +276,7 @@ function handledc(args) {
 function handleEc(args) {
   const textToEncode = args.join(" ");
   if (!textToEncode) {
-    console.log("Usage: ec [text to encode]");
+    console.log("Usage: ec64 [text to encode]");
     return;
   }
   try {
@@ -292,35 +290,34 @@ function handleEc(args) {
 }
 
 let alphabet = {
-'a': '<',
-'b': '!',
-'c': '(',
-'d': '@',
-'e': '%',
-'f': '~',
-'g': '|',
-'h': '?',
-'i': '>',
-'j': '#',
-'k': '$',
-'l': '*',
-'m': ')',
-'n': ';',
-'o': '-',
-'p': '+',
-'q': '=',
-'r': '[',
-'s': ':',
-'t': ']',
-'u': '^',
-'v': '&',
-'w': '{',
-'x': '}',
-'y': '.',
-'z': "'"
-}
+  a: "<",
+  b: "!",
+  c: "(",
+  d: "@",
+  e: "%",
+  f: "~",
+  g: "|",
+  h: "?",
+  i: ">",
+  j: "#",
+  k: "$",
+  l: "*",
+  m: ")",
+  n: ";",
+  o: "-",
+  p: "+",
+  q: "=",
+  r: "[",
+  s: ":",
+  t: "]",
+  u: "^",
+  v: "&",
+  w: "{",
+  x: "}",
+  y: ".",
+  z: "'",
+};
 
-// Create a reverse mapping for decoding
 const reverseAlphabet = Object.fromEntries(
   Object.entries(alphabet).map(([key, value]) => [value, key])
 );
@@ -331,10 +328,9 @@ function handleETextCode(args) {
     console.log("Usage: ec [text to encode]");
     return;
   }
-  // First, encode the text to Base64
+
   const base64Encoded = Buffer.from(textToEncode, "utf8").toString("base64");
 
-  // Then, apply the substitution cipher to the Base64 string
   const finalEncoded = base64Encoded
     .split("")
     .map((char) => alphabet[char] || char)
@@ -348,13 +344,12 @@ function handleDTextCode(args) {
     console.log("Usage: dc [text to decode]");
     return;
   }
-  // First, reverse the substitution cipher to get the Base64 string
+
   const base64String = textToDecode
     .split("")
     .map((char) => reverseAlphabet[char] || char)
     .join("");
 
-  // Then, decode the Base64 string back to the original text
   try {
     const decoded = Buffer.from(base64String, "base64").toString("utf8");
     console.log(`Decoded text: ${decoded}`);
@@ -387,7 +382,7 @@ function gameLoop() {
       : "/";
   const prompt = `${colors.fg.green}${gameState.playerName}@${colors.reset}:${colors.fg.yellow}${pathString}${colors.reset}$ `;
 
-  rl.question(prompt, (input) => {
+  rl.question(prompt, async (input) => {
     const [command, ...args] = input.trim().split(" ");
 
     switch (command.toLowerCase()) {
@@ -398,7 +393,7 @@ function gameLoop() {
         handleCd(args);
         break;
       case "cat":
-        handleCat(args);
+        await handleCat(args);
         break;
       case "unlock":
         handleUnlock(args);
@@ -420,7 +415,7 @@ function gameLoop() {
         break;
       case "clear":
         console.clear();
-        displayWelcomeBanner();
+        await displayWelcomeBanner();
         break;
       case "exit":
         console.log(`Terminating the game. Goodbye, ${gameState.playerName}!`);
@@ -442,11 +437,11 @@ function gameLoop() {
 }
 
 function askForName() {
-  rl.question("Please enter a name: ", (name) => {
+  rl.question("Please enter a name: ", async (name) => {
     if (name.trim()) {
       gameState.playerName = name.trim();
     }
-    displayWelcomeBanner();
+    await displayWelcomeBanner();
     gameLoop();
   });
 }
